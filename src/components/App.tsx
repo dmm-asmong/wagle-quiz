@@ -23,7 +23,12 @@ interface Team {
 
 const LEVEL_LABEL: Record<Level, string> = { 1: "쉬움", 2: "보통", 3: "도전" };
 const TEAM_NAMES = ["1모둠", "2모둠", "3모둠", "4모둠", "5모둠", "6모둠"];
-const TEAM_COLORS = ["#8446e5", "#e04080", "#1fa98a", "#f08a24", "#3b82f6", "#a36a00"];
+const TEAM_PALETTES: Record<AudienceId, string[]> = {
+  elem: ["#ff4f86", "#7a5cff", "#16b383", "#ff9a1f", "#2f9bff", "#c94fd6"],
+  teen: ["#2f5be8", "#ff6b2c", "#1f9e62", "#e0364f", "#8a4fd6", "#3a3f4f"],
+  adult: ["#1b2a4a", "#d9622b", "#1f8a7a", "#c98a14", "#5b6b8c", "#9a3f5c"],
+  work: ["#1f4a39", "#a77b2b", "#8c3b3b", "#2f4f72", "#4f7a5c", "#6b5a45"],
+};
 const PREF_KEY = "wagle-quiz:v1:prefs";
 
 function readPrefs(): { sfx?: boolean; settings?: Partial<Settings> } {
@@ -67,6 +72,7 @@ export default function App() {
   const [poolNote, setPoolNote] = useState("");
 
   const aud = getAudience(audId);
+  const TEAM_COLORS = TEAM_PALETTES[audId];
   const customType: QuizType | null = useMemo(
     () =>
       custom.length
@@ -204,7 +210,7 @@ export default function App() {
   const settingsLabel = `${settings.diff === "all" ? "전체 난이도" : LEVEL_LABEL[settings.diff]} · ${settings.count}문제 · ${settings.timer ? `힌트 ${settings.timer}초` : "힌트 타이머 끔"}`;
 
   return (
-    <div className={`app tone-${aud.tone} screen-${screen}`}>
+    <div className={`app tone-${aud.tone} screen-${screen} ${screen === "pick" ? "th-pick" : `themed th-${aud.id}`}`}>
       <header className="topbar">
         <button className="brand" onClick={() => { fx("click"); setScreen("pick"); }} aria-label="처음 화면으로">
           <span className="brand-mark">
@@ -248,8 +254,9 @@ export default function App() {
             <h2 className="section-title"><span aria-hidden>👋</span> 오늘 누구랑 퀴즈할까요?</h2>
             <div className="aud-grid">
               {AUDIENCES.map((a) => (
-                <button key={a.id} className={`aud-card tone-bg-${a.tone}`} onClick={() => pickAudience(a.id)}>
-                  <Mascot kind={a.mascot} size={110} />
+                <button key={a.id} className={`aud-card themed th-${a.id}`} onClick={() => pickAudience(a.id)}>
+                  <span className="aud-kicker">{a.kicker}</span>
+                  <span className="aud-mascot"><Mascot kind={a.mascot} size={110} /></span>
                   <span className="aud-name">{a.name}</span>
                   <span className="aud-tag">{a.tagline}</span>
                   <span className="aud-count">
@@ -267,11 +274,11 @@ export default function App() {
             <div className={`hero hero-home tone-bg-${aud.tone}`}>
               <div>
                 <button className="back" onClick={() => setScreen("pick")}>← 대상 다시 고르기</button>
-                <p className="eyebrow">{aud.name} 퀴즈놀이터</p>
+                <p className="eyebrow"><span className="eyebrow-kicker">{aud.kicker}</span> {aud.name} 퀴즈놀이터</p>
                 <h1 className="display">{aud.cheer.start}</h1>
                 <p className="meta">현재 {allTypes.length}종 · {totalQ}문제</p>
               </div>
-              <Mascot kind={aud.mascot} size={150} />
+              <span className="hero-mascot"><Mascot kind={aud.mascot} size={150} /></span>
             </div>
 
             <div className="random-card">
@@ -493,6 +500,7 @@ export default function App() {
 
         {screen === "result" && (
           <section className="result">
+            <div className="result-frame" aria-hidden />
             <div className="confetti" aria-hidden>
               {Array.from({ length: 28 }).map((_, i) => (
                 <span key={i} style={{ left: `${(i * 37) % 100}%`, animationDelay: `${(i % 7) * 0.25}s`, background: TEAM_COLORS[i % 6] }} />

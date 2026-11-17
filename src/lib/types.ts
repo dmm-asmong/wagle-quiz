@@ -40,6 +40,7 @@ export interface Audience {
   tagline: string;
   tone: "lavender" | "mint" | "butter" | "peach";
   mascot: "owl" | "fox" | "bear" | "cat";
+  kicker: string; // 대상 카드·홈에 붙는 테마 라벨
   cheer: { correct: string; hint: string; start: string; end: string };
   types: QuizType[];
 }

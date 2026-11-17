@@ -35,6 +35,12 @@ function Cheeks({ y = 12 }: { y?: number }) {
   );
 }
 
+function lighten(hex: string, t: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) => Math.round(c + (255 - c) * t));
+  return `rgb(${ch.join(",")})`;
+}
+
 export default function Mascot({ kind, size = 120, wink = false, className = "" }: { kind: Kind; size?: number; wink?: boolean; className?: string }) {
   const p = PAL[kind];
   const gid = `g-${kind}`;
@@ -42,7 +48,7 @@ export default function Mascot({ kind, size = 120, wink = false, className = "" 
     <svg viewBox="-70 -75 140 150" width={size} height={size} className={className} aria-hidden="true">
       <defs>
         <radialGradient id={gid} cx="35%" cy="30%" r="75%">
-          <stop offset="0%" stopColor="#fff" stopOpacity="0.3" />
+          <stop offset="0%" stopColor={lighten(p.body, 0.3)} />
           <stop offset="35%" stopColor={p.body} stopOpacity="1" />
           <stop offset="100%" stopColor={p.dark} />
         </radialGradient>
