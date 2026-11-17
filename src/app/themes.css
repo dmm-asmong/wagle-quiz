@@ -245,7 +245,7 @@
 .th-teen .q-big { color: var(--ink); background: linear-gradient(transparent 62%, var(--hl) 62%, var(--hl) 90%, transparent 90%); padding: 0 14px; }
 .th-teen .q-big.mode-emoji { background: none; }
 .th-teen .q-text-lg { color: var(--ink); }
-.th-teen .hint-box { border: 2.5px solid var(--pink); border-radius: 50% / 60%; background: transparent; color: var(--pink-d); font-family: var(--hand); font-weight: 700; padding: 8px 34px; }
+.th-teen .hint-box { border: 2.5px solid var(--pink); border-radius: 50% / 60%; background: transparent; color: var(--pink-d); font-family: var(--display); font-weight: 400; padding: 8px 34px; }
 .th-teen .hint-label { background: var(--pink); font-family: var(--display); font-weight: 400; }
 .th-teen .answer {
   position: relative; background: #fff27d; border: 0; border-radius: 2px; box-shadow: 4px 8px 14px rgba(31,36,51,.18);
