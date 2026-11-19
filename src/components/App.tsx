@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AUDIENCES, getAudience } from "@/lib/audiences";
-import { makeHint } from "@/lib/build";
-import { CUSTOM_TYPE_ID, loadCustom, toQuestion, type CustomQ } from "@/lib/custom";
+import { makeHint, shuffleJjg } from "@/lib/build";
+import { CUSTOM_JJG_TYPE_ID, CUSTOM_TYPE_ID, isJjg, loadCustom, toQuestion, type CustomQ } from "@/lib/custom";
 import { playSfx, startBgm, stopBgm, type Sfx } from "@/lib/sound";
 import type { AudienceId, Level, Question, QuizType } from "@/lib/types";
 import Mascot from "./Mascot";
@@ -30,6 +30,10 @@ const TEAM_PALETTES: Record<AudienceId, string[]> = {
   work: ["#1f4a39", "#a77b2b", "#8c3b3b", "#2f4f72", "#4f7a5c", "#6b5a45"],
 };
 const PREF_KEY = "wagle-quiz:v1:prefs";
+// 진진가 문구: 대상별 말투
+const JJG_TOPIC: Record<AudienceId, string> = { elem: "오늘의 주제", teen: "단원", adult: "TOPIC", work: "주제" };
+const JJG_RIGHT: Record<AudienceId, string> = { elem: "딩동댕! 가짜를 찾았어요!", teen: "정답! 가짜 잡았다!", adult: "정답입니다.", work: "정확히 찾으셨습니다!" };
+const JJG_WRONG: Record<AudienceId, string> = { elem: "앗, 그건 진짜였어요!", teen: "아깝다, 그건 진짜였어!", adult: "그 문장은 사실이었습니다.", work: "아쉽지만 그 문장은 사실입니다." };
 
 function readPrefs(): { sfx?: boolean; settings?: Partial<Settings> } {
   if (typeof window === "undefined") return {};
@@ -70,17 +74,20 @@ export default function App() {
   const [teamsOn, setTeamsOn] = useState(false);
   const [teams, setTeams] = useState<Team[]>(TEAM_NAMES.slice(0, 4).map((name) => ({ name, score: 0 })));
   const [poolNote, setPoolNote] = useState("");
+  const [pick, setPick] = useState<number | null>(null); // 진진가: 우리 반이 고른 문장
 
   const aud = getAudience(audId);
   const TEAM_COLORS = TEAM_PALETTES[audId];
-  const customType: QuizType | null = useMemo(
-    () =>
-      custom.length
-        ? { id: CUSTOM_TYPE_ID, name: "우리 반 문제", desc: "선생님이 직접 만든 문제", icon: "🏫", tone: "pink", mode: "text", prompt: "선생님이 준비한 문제예요!", questions: custom.map(toQuestion) }
-        : null,
-    [custom],
-  );
-  const allTypes = useMemo(() => (customType ? [...aud.types, customType] : aud.types), [aud, customType]);
+  const customTypes: QuizType[] = useMemo(() => {
+    const plain = custom.filter((c) => !isJjg(c));
+    const jjg = custom.filter(isJjg);
+    const out: QuizType[] = [];
+    if (plain.length) out.push({ id: CUSTOM_TYPE_ID, name: "우리 반 문제", desc: "선생님이 직접 만든 문제", icon: "🏫", tone: "pink", mode: "text", prompt: "선생님이 준비한 문제예요!", questions: plain.map(toQuestion) });
+    if (jjg.length) out.push({ id: CUSTOM_JJG_TYPE_ID, name: "우리 반 진진가", desc: "선생님이 만든 진짜 둘·가짜 하나", icon: "🎭", tone: "pink", mode: "jjg", prompt: "선생님이 준비한 진진가! 가짜는 몇 번?", hintText: "진짜 문장 하나를 먼저 알려 줘요", questions: jjg.map(toQuestion) });
+    return out;
+  }, [custom]);
+  const customType = customTypes.length > 0;
+  const allTypes = useMemo(() => [...aud.types, ...customTypes], [aud, customTypes]);
 
   useEffect(() => {
     try {
@@ -132,8 +139,10 @@ export default function App() {
       round++;
     }
     setPoolNote(picked.length < settings.count ? `조건에 맞는 문제가 ${picked.length}개라서 ${picked.length}문제로 진행해요.` : "");
-    setQueue(shuffle(picked));
+    // 진진가는 문장 순서를 매번 섞어 가짜 위치가 달라지게
+    setQueue(shuffle(picked).map((q) => shuffleJjg(q)));
     setIdx(0);
+    setPick(null);
     setHintOn(false);
     setRevealed(false);
     setLeft(settings.timer);
@@ -166,10 +175,19 @@ export default function App() {
     if (!hintOn) fx("hint");
     setHintOn(true);
   }, [hintOn, fx]);
+  const isJjgQ = cur?.mode === "jjg" && !!cur.stmts;
   const reveal = useCallback(() => {
-    if (!revealed) fx("reveal");
+    if (!revealed) fx(isJjgQ ? "stamp" : "reveal");
     setRevealed(true);
-  }, [revealed, fx]);
+  }, [revealed, fx, isJjgQ]);
+  const choose = useCallback(
+    (i: number) => {
+      if (revealed) return;
+      fx("pick");
+      setPick((p) => (p === i ? null : i));
+    },
+    [revealed, fx],
+  );
   const next = useCallback(() => {
     if (idx + 1 >= queue.length) {
       fx("finish");
@@ -178,6 +196,7 @@ export default function App() {
     }
     fx("click");
     setIdx((i) => i + 1);
+    setPick(null);
     setHintOn(false);
     setRevealed(false);
     setLeft(settings.timer);
@@ -197,11 +216,22 @@ export default function App() {
         next();
       } else if (e.key.toLowerCase() === "h" || e.key === "ㅗ") {
         showHint();
+      } else if (isJjgQ && ["1", "2", "3"].includes(e.key)) {
+        choose(Number(e.key) - 1);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [screen, revealed, reveal, next, showHint]);
+  }, [screen, revealed, reveal, next, showHint, isJjgQ, choose]);
+
+  // 진진가 힌트: 가짜가 아닌 문장 하나를 '진짜'로 미리 표시 (문제마다 고정)
+  const hintTrue = useMemo(() => {
+    if (!cur || cur.fake == null) return -1;
+    const trues = [0, 1, 2].filter((i) => i !== cur.fake);
+    let h = 0;
+    for (const ch of cur.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return trues[h % 2];
+  }, [cur]);
 
   const totalQ = allTypes.reduce((n, t) => n + t.questions.length, 0);
   const timerOptions = [10, 15, 20, 30];
@@ -242,7 +272,7 @@ export default function App() {
                   머리는 <span className="hl-purple">말랑!</span> 교실은 <span className="hl-pink">와글!</span>
                 </h1>
                 <p className="lead">TV나 프로젝터에 띄우고, 선생님이 진행하는 단체 퀴즈예요. 먼저 누구랑 할지 골라 주세요.</p>
-                <p className="meta">대상 4개 · 퀴즈 16종 · 기본 문제 {AUDIENCES.reduce((n, a) => n + a.types.reduce((m, t) => m + t.questions.length, 0), 0)}개</p>
+                <p className="meta">대상 4개 · 퀴즈 {AUDIENCES.reduce((n, a) => n + a.types.length, 0)}종 · 기본 문제 {AUDIENCES.reduce((n, a) => n + a.types.reduce((m, t) => m + t.questions.length, 0), 0)}개</p>
               </div>
               <div className="hero-mascots" aria-hidden>
                 <Mascot kind="owl" size={130} />
@@ -338,6 +368,7 @@ export default function App() {
                 <li>문제가 뜨면 다 같이 생각! 시간이 지나면 힌트가 저절로 열려요. 틀림 처리는 없어요.</li>
                 <li><b>Space / Enter</b> 정답 확인 → 한 번 더 누르면 다음 문제, <b>→</b> 다음 문제, <b>H</b> 힌트.</li>
                 <li>모둠 점수판을 켜면 2~6모둠 점수를 +1로 매길 수 있어요.</li>
+                <li><b>🎭 진진가</b>: 세 문장 중 가짜 하나를 찾아요. 다 같이 고른 문장을 누르거나 <b>1·2·3</b> 키로 표시한 뒤 정답을 확인하면, 가짜와 그 이유가 나와요.</li>
               </ol>
             </details>
 
@@ -430,7 +461,7 @@ export default function App() {
                 </span>
               </div>
 
-              <div className={`q-card tone-bg-${curType?.tone ?? "lavender"} ${revealed ? "revealed" : ""}`}>
+              <div className={`q-card tone-bg-${curType?.tone ?? "lavender"} ${revealed ? "revealed" : ""} ${isJjgQ ? "mode-jjg" : ""}`}>
                 <div className="q-meta">
                   <span className="badge">{curType?.icon} {curType?.name}</span>
                   <span className={`badge lv-${cur.l}`}>{LEVEL_LABEL[cur.l]}</span>
@@ -441,11 +472,45 @@ export default function App() {
                   )}
                 </div>
                 <p className="q-prompt">{curType?.prompt}</p>
-                {cur.big && <p className={`q-big mode-${cur.mode}`}>{cur.big}</p>}
-                <p className={`q-text ${cur.big ? "" : "q-text-lg"}`}>{cur.q}</p>
+                {isJjgQ ? (
+                  <>
+                    <p className="jjg-topic"><span>{JJG_TOPIC[aud.id]}</span> {cur.q}</p>
+                    <ol className={`jjg-list ${revealed ? "is-revealed" : ""} ${pick != null ? "has-pick" : ""}`} aria-label="세 문장 중 가짜 고르기">
+                      {cur.stmts!.map((st, i) => {
+                        const isFake = i === cur.fake;
+                        const cls = ["jjg-item", `n${i + 1}`, pick === i ? "picked" : "", revealed ? (isFake ? "is-fake" : "is-true") : "", !revealed && hintOn && i === hintTrue ? "hint-true" : ""].join(" ");
+                        return (
+                          <li key={i}>
+                            <button type="button" className={cls} onClick={() => choose(i)} aria-pressed={pick === i} disabled={revealed}>
+                              <span className="jjg-no" aria-hidden>{i + 1}</span>
+                              <span className="jjg-s">{st}</span>
+                              {revealed ? (
+                                <span className={`jjg-stamp ${isFake ? "fake" : "true"}`}>{isFake ? "가짜" : "진짜"}</span>
+                              ) : hintOn && i === hintTrue ? (
+                                <span className="jjg-stamp hint">진짜!</span>
+                              ) : pick === i ? (
+                                <span className="jjg-pickmark">우리 선택</span>
+                              ) : null}
+                              <span className="sr-only">{revealed ? (isFake ? " (가짜)" : " (진짜)") : pick === i ? " (선택함)" : ""}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>
+                ) : (
+                  <>
+                    {cur.big && <p className={`q-big mode-${cur.mode}`}>{cur.big}</p>}
+                    <p className={`q-text ${cur.big ? "" : "q-text-lg"}`}>{cur.q}</p>
+                  </>
+                )}
 
                 <div className="hint-row">
-                  {hintOn ? (
+                  {hintOn && !revealed ? (
+                    <p className="hint-box">
+                      <span className="hint-label">힌트</span> {isJjgQ ? `${hintTrue + 1}번은 진짜예요!${cur.h ? ` ${cur.h}` : ""}` : makeHint(cur, curType?.hintText)}
+                    </p>
+                  ) : hintOn && !isJjgQ ? (
                     <p className="hint-box">
                       <span className="hint-label">힌트</span> {makeHint(cur, curType?.hintText)}
                     </p>
@@ -454,7 +519,29 @@ export default function App() {
                   )}
                 </div>
 
-                {revealed && (
+                {revealed && isJjgQ && (
+                  <div className="answer answer-jjg">
+                    <p className="answer-label">{aud.cheer.correct}</p>
+                    <p className="answer-text">{cur.fake! + 1}번이 가짜!</p>
+                    {pick != null && (
+                      <p className={`jjg-verdict ${pick === cur.fake ? "ok" : "no"}`}>
+                        우리 선택 {pick + 1}번 · {pick === cur.fake ? JJG_RIGHT[aud.id] : JJG_WRONG[aud.id]}
+                      </p>
+                    )}
+                    {cur.e && <p className="answer-exp"><b className="why">왜 가짜?</b> {cur.e}</p>}
+                    {teamsOn && (
+                      <div className="jjg-award">
+                        <span>맞힌 모둠</span>
+                        {teams.map((t, i) => (
+                          <button key={i} type="button" style={{ borderColor: TEAM_COLORS[i], color: TEAM_COLORS[i] }} onClick={() => { fx("score"); setTeams((ts) => ts.map((x, j) => (j === i ? { ...x, score: x.score + 1 } : x))); }}>
+                            {t.name} +1
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {revealed && !isJjgQ && (
                   <div className="answer">
                     <p className="answer-label">{aud.cheer.correct}</p>
                     <p className={`answer-text ${[...cur.a].length > 12 ? "long" : ""}`}>{cur.a}</p>
@@ -472,7 +559,7 @@ export default function App() {
                   <button className="pill pill-lg pill-pink" onClick={next}>{idx + 1 >= queue.length ? "결과 보기 🎉" : "다음 문제 →"}</button>
                 )}
               </div>
-              <p className="kbd-help">Space·Enter 정답/다음 · → 다음 · H 힌트</p>
+              <p className="kbd-help">{isJjgQ ? "1·2·3 문장 고르기 · " : ""}Space·Enter 정답/다음 · → 다음 · H 힌트</p>
             </div>
 
             {teamsOn && (
@@ -532,7 +619,7 @@ export default function App() {
               <ol>
                 {queue.map((q) => (
                   <li key={q.id}>
-                    <span>{q.big ? `${q.big} — ` : ""}{q.q}</span> <b>{q.a}</b>
+                    <span>{q.mode === "jjg" ? `🎭 ${q.q} — 가짜: ` : q.big ? `${q.big} — ` : ""}{q.mode === "jjg" ? "" : q.q}</span> <b>{q.a}</b>
                   </li>
                 ))}
               </ol>

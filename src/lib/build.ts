@@ -39,6 +39,7 @@ function hash(s: string) {
 /** 힌트 만들기: 정답이 보이지 않게, 초성이나 일부만 */
 export function makeHint(q: Pick<Question, "a" | "h" | "mode">, typeHint?: string): string {
   if (q.h) return q.h;
+  if (q.mode === "jjg") return JJG_HINT;
   const core = coreAnswer(q.a);
   if (q.mode === "chosung") {
     // 초성은 이미 보이니 첫 글자를 공개
@@ -53,6 +54,47 @@ export function makeHint(q: Pick<Question, "a" | "h" | "mode">, typeHint?: strin
     .split(/(\s+|\+|\/|-)/)
     .map((tok) => (/^[A-Za-z0-9₀-₉]+$/.test(tok) ? tok[0] + "•".repeat(Math.max(0, [...tok].length - 1)) : tok))
     .join("");
+}
+
+/** 진진가 한 줄: 주제, 진짜1, 진짜2, 가짜, 해설, 난이도, (선택) 힌트 */
+export type JjgItem = [topic: string, true1: string, true2: string, fake: string, e: string, l: Level, h?: string];
+export interface RawJjgType {
+  id: string;
+  name: string;
+  desc: string;
+  icon: string;
+  tone: QuizType["tone"];
+  prompt: string;
+  items: JjgItem[];
+}
+
+export const JJG_HINT = "진짜 문장 하나를 먼저 알려 줘요";
+
+/** 진진가 문장 순서를 섞어 가짜 위치가 매번 달라지게 */
+export function shuffleJjg(q: Question, rand: () => number = Math.random): Question {
+  if (q.mode !== "jjg" || !q.stmts || q.fake == null) return q;
+  const order = [0, 1, 2];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return { ...q, stmts: order.map((i) => q.stmts![i]), fake: order.indexOf(q.fake) };
+}
+
+export function buildJjg(raw: RawJjgType): QuizType {
+  const questions: Question[] = raw.items.map(([topic, t1, t2, f, e, l, h], i) => ({
+    id: `${raw.id}-${i + 1}`,
+    q: topic,
+    a: f,
+    e,
+    l,
+    h,
+    mode: "jjg",
+    typeId: raw.id,
+    stmts: [t1, t2, f],
+    fake: 2,
+  }));
+  return { id: raw.id, name: raw.name, desc: raw.desc, icon: raw.icon, tone: raw.tone, mode: "jjg", prompt: raw.prompt, hintText: JJG_HINT, questions };
 }
 
 export function buildType(raw: RawType): QuizType {

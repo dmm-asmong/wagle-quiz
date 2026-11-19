@@ -7,7 +7,8 @@ export type QuizMode =
   | "emoji" // big 에 이모지를 크게
   | "term" // big 에 용어를 크게
   | "blank" // 빈칸 채우기 (q 안에 ___)
-  | "text"; // 문제 글만
+  | "text" // 문제 글만
+  | "jjg"; // 진진가: 세 문장 중 가짜 하나 고르기
 
 export interface Question {
   id: string;
@@ -19,6 +20,9 @@ export interface Question {
   h?: string; // 직접 정한 힌트
   mode: QuizMode;
   typeId: string;
+  /** 진진가 전용: 보여 줄 세 문장과 가짜 문장의 위치(0~2) */
+  stmts?: string[];
+  fake?: number;
 }
 
 export interface QuizType {

@@ -541,6 +541,121 @@
 .aud-card.th-work .pill { border-radius: 3px; box-shadow: none; background: var(--purple); }
 
 /* =========================================================
+   진진가 — 대상별 모양
+   ========================================================= */
+/* 1) 초등: 캔디 스티커 세 장 */
+.th-elem .jjg-topic span { background: var(--outline); color: #fff0a3; display: inline-block; transform: rotate(-3deg); font-family: var(--display); font-weight: 400; }
+.th-elem .jjg-topic { font-family: var(--display); font-weight: 400; font-size: clamp(22px, 2vw, 30px); }
+.th-elem .jjg-item {
+  border: 4px solid var(--outline); border-radius: 30px; box-shadow: 5px 6px 0 var(--outline); background: #fff;
+  transition: transform .3s cubic-bezier(.34, 1.8, .5, 1), background .15s, box-shadow .15s;
+}
+.th-elem .jjg-item.n1 { transform: rotate(-.7deg); }
+.th-elem .jjg-item.n2 { transform: rotate(.6deg); }
+.th-elem .jjg-item.n3 { transform: rotate(-.3deg); }
+.th-elem .jjg-item:not(:disabled):hover { transform: rotate(0) scale(1.015); }
+.th-elem .jjg-no { border: 3px solid var(--outline); font-weight: 400; box-shadow: 2px 3px 0 var(--outline); }
+.th-elem .n1 .jjg-no { background: #ff4f86; }
+.th-elem .n2 .jjg-no { background: #7a5cff; }
+.th-elem .n3 .jjg-no { background: #16b383; }
+.th-elem .jjg-s { font-family: var(--display); font-weight: 400; font-size: clamp(22px, 2.2vw, 34px); }
+.th-elem .jjg-item.picked { background: #fff0a3; box-shadow: 7px 9px 0 var(--outline); transform: scale(1.02) rotate(-.4deg); }
+.th-elem .jjg-pickmark { font-family: var(--display); font-weight: 400; font-size: 18px; color: var(--outline); background: #fff; border: 2.5px solid var(--outline); border-radius: 999px; padding: 2px 12px; }
+.th-elem .jjg-item.hint-true { border-style: dashed; }
+.th-elem .jjg-stamp { font-family: var(--display); font-weight: 400; border: 3px solid var(--outline); box-shadow: 2px 3px 0 var(--outline); }
+.th-elem .jjg-stamp.hint { background: #ccf5e1; color: var(--outline); }
+.th-elem .jjg-item.is-fake { background: #ffe0ea; }
+.th-elem .jjg-stamp.fake { background: #ff4f86; color: #fff; font-size: clamp(22px, 2.2vw, 32px); padding: 4px 18px; transform: translateY(-50%) rotate(-9deg); animation: stampElem .6s cubic-bezier(.34, 1.8, .5, 1); }
+.th-elem .jjg-stamp.true { background: #ccf5e1; color: #0f6b47; }
+.th-elem .jjg-stamp.true::before { content: "★ "; color: #f5b400; }
+.th-elem .jjg-list.is-revealed .is-true { opacity: 1; }
+.th-elem .jjg-list.is-revealed .is-true .jjg-s { color: var(--ink-soft); }
+@keyframes stampElem { from { transform: translateY(-50%) scale(1.8) rotate(-20deg); opacity: 0; } to { transform: translateY(-50%) rotate(-9deg); opacity: 1; } }
+
+/* 2) 중고등: 노트 문제 풀이 — 번호에 펜 동그라미, 가짜엔 빨간 줄 */
+.th-teen .jjg-topic { font-family: var(--display); font-weight: 400; font-size: clamp(22px, 2vw, 30px); }
+.th-teen .jjg-topic span { background: var(--ink); color: #fff; border-radius: 2px; display: inline-block; transform: rotate(-2deg); font-weight: 400; }
+.th-teen .jjg-list { gap: 4px; }
+.th-teen .jjg-item { background: transparent; border: 0; border-bottom: 1.5px dashed #b8c1d6; border-radius: 0; padding-left: 6px; }
+.th-teen .jjg-item:not(:disabled):hover { background: rgba(255, 240, 106, .25); }
+.th-teen .jjg-no { background: transparent; color: var(--ink); border: 2px solid var(--ink); font-family: var(--hand); font-weight: 700; }
+.th-teen .jjg-s { font-family: var(--display); font-weight: 400; font-size: clamp(21px, 2.1vw, 33px); }
+.th-teen .jjg-item.picked .jjg-no { border: 3px solid var(--pink); color: var(--pink-d); border-radius: 46% 54% 50% 50% / 55% 45% 55% 45%; transform: rotate(-8deg) scale(1.12); }
+.th-teen .jjg-item.picked .jjg-s { background: linear-gradient(transparent 60%, var(--hl) 60%, var(--hl) 92%, transparent 92%); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.th-teen .jjg-pickmark { font-family: var(--hand); font-size: 20px; color: var(--pink-d); }
+.th-teen .jjg-pickmark::before { content: "← "; }
+.th-teen .jjg-stamp { font-family: var(--hand); font-weight: 700; background: transparent; border-radius: 4px; font-size: clamp(20px, 1.9vw, 26px); }
+.th-teen .jjg-stamp.hint { color: var(--purple); background: transparent; }
+.th-teen .jjg-stamp.hint::before { content: "✓ "; }
+.th-teen .jjg-item.is-fake .jjg-s { text-decoration: line-through; text-decoration-color: #e0364f; text-decoration-thickness: 3px; }
+.th-teen .jjg-stamp.fake { color: #e0364f; background: transparent; border: 2.5px solid #e0364f; transform: translateY(-50%) rotate(-6deg); animation: stick .4s ease-out; }
+.th-teen .jjg-stamp.fake::before { content: "✗ "; }
+.th-teen .jjg-stamp.true { color: var(--purple); background: transparent; }
+.th-teen .jjg-stamp.true::before { content: "✓ "; }
+.th-teen .jjg-list.is-revealed .is-true { opacity: 1; }
+.th-teen .answer-jjg .why { font-family: var(--hand); font-size: 1em; }
+
+/* 3) 성인: 다크 강의 슬라이드 — 01/02/03 불릿, TRUE/FALSE 태그 */
+.th-adult .jjg-topic { color: #fff; font-weight: 800; letter-spacing: -0.02em; }
+.th-adult .jjg-topic span { background: transparent; border: 1px solid var(--amber); color: var(--amber); border-radius: 4px; font-family: var(--mono); font-weight: 600; letter-spacing: 1px; }
+.th-adult .jjg-item { background: rgba(255,255,255,.04); border: 1px solid #34456a; border-radius: 8px; color: #eef2f8; }
+.th-adult .jjg-item:not(:disabled):hover { border-color: #6e7c98; background: rgba(255,255,255,.07); }
+.th-adult .jjg-no { background: transparent; color: var(--amber); border: 1px solid #4a5a7a; border-radius: 6px; font-family: var(--mono); font-weight: 600; font-size: clamp(15px, 1.3vw, 19px); letter-spacing: 0; }
+.th-adult .q-card.mode-jjg.revealed .jjg-no { font-size: 15px; }
+.th-adult .jjg-no::before { content: "0"; }
+.th-adult .jjg-s { color: #eef2f8; font-weight: 600; letter-spacing: -0.01em; }
+.th-adult .jjg-item.picked { border-color: var(--amber); background: rgba(242,179,61,.10); box-shadow: inset 4px 0 0 var(--amber); }
+.th-adult .jjg-item.picked .jjg-no { border-color: var(--amber); }
+.th-adult .jjg-pickmark { font-family: var(--mono); color: var(--amber); font-size: 13px; letter-spacing: .5px; }
+.th-adult .jjg-pickmark::before { content: "SELECTED · "; }
+.th-adult .jjg-stamp { font-family: var(--mono); font-weight: 600; border-radius: 4px; font-size: clamp(13px, 1.2vw, 16px); letter-spacing: .5px; }
+.th-adult .jjg-stamp.hint { background: transparent; border: 1px solid #7fd8b0; color: #7fd8b0; }
+.th-adult .jjg-stamp.hint::before { content: "TRUE · "; }
+.th-adult .jjg-item.is-fake { border-color: var(--pink); background: rgba(217,98,43,.16); box-shadow: inset 4px 0 0 var(--pink); }
+.th-adult .jjg-stamp.fake { background: var(--pink); color: #fff; animation: fadeIn .3s ease-out; }
+.th-adult .jjg-stamp.fake::before { content: "FALSE · "; }
+.th-adult .jjg-stamp.true { background: transparent; border: 1px solid #7fd8b0; color: #7fd8b0; }
+.th-adult .jjg-stamp.true::before { content: "TRUE · "; }
+.th-adult .jjg-list.is-revealed .is-true { opacity: .7; }
+.th-adult .answer-jjg .why { font-family: var(--mono); font-size: .7em; color: var(--pink-d); }
+.th-adult .answer-jjg .jjg-award button { border-radius: 6px; font-family: var(--mono); font-weight: 600; }
+
+/* 4) 직장인: 워크숍 체크리스트 문서 — 가짜엔 인주 도장 */
+.th-work .jjg-topic { font-family: var(--display); font-weight: 700; color: var(--purple-d); font-size: clamp(20px, 1.9vw, 28px); }
+.th-work .jjg-topic span { background: transparent; border: 1px solid var(--gold); color: var(--pink-d); border-radius: 2px; letter-spacing: 2px; font-family: "Pretendard Variable", sans-serif; }
+.th-work .jjg-list { gap: 0; border-top: 1px solid var(--line); }
+.th-work .jjg-item { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding-top: clamp(14px, 1.5vw, 20px); padding-bottom: clamp(14px, 1.5vw, 20px); }
+.th-work .q-card.mode-jjg.revealed .jjg-item { padding-top: 10px; padding-bottom: 10px; min-height: 84px; }
+.th-work .jjg-item:not(:disabled):hover { background: #f8f1df; }
+.th-work .jjg-no { background: transparent; color: var(--purple-d); border: 1px solid var(--gold); border-radius: 2px; font-family: var(--display); font-weight: 700; }
+.th-work .jjg-s { font-family: var(--display); font-weight: 600; color: var(--ink); }
+.th-work .jjg-item.picked { background: #eef3ef; box-shadow: inset 3px 0 0 var(--purple); }
+.th-work .jjg-item.picked .jjg-no { background: var(--purple); color: #fbf6ea; border-color: var(--purple); }
+.th-work .jjg-pickmark { color: var(--purple); letter-spacing: 1.5px; font-size: 13px; }
+.th-work .jjg-stamp { border-radius: 2px; font-weight: 700; letter-spacing: 2px; background: transparent; font-size: clamp(14px, 1.3vw, 17px); }
+.th-work .jjg-stamp.hint { border: 1px solid var(--gold); color: var(--pink-d); background: #f8f1df; }
+.th-work .jjg-item.is-fake { background: #fbf3f1; }
+.th-work .jjg-stamp.fake {
+  width: clamp(64px, 5.6vw, 80px); height: clamp(64px, 5.6vw, 80px); padding: 0; display: grid; place-items: center; border-radius: 50%;
+  border: 4px double #8c3b3b; color: #8c3b3b; font-family: var(--display); font-size: clamp(18px, 1.7vw, 23px); letter-spacing: 1px;
+  transform: translateY(-50%) rotate(-12deg); animation: fadeIn .35s ease-out;
+}
+.th-work .jjg-stamp.true { border: 1px solid var(--purple); color: var(--purple); }
+.th-work .jjg-stamp.true::before { content: "✓ "; }
+.th-work .jjg-list.is-revealed .is-true { opacity: 1; }
+.th-work .jjg-list.is-revealed .is-true .jjg-s { color: var(--ink-soft); }
+.th-work .answer-jjg .why { color: var(--gold-l); }
+.th-work .answer-jjg .jjg-verdict.ok { color: #bfe3cc; }
+.th-work .answer-jjg .jjg-verdict.no { color: #f1c1b8; }
+.th-work .answer-jjg .jjg-award { color: #d9e3dc; }
+.th-work .answer-jjg .jjg-award button { border-radius: 2px; background: var(--paper); }
+@media (max-width: 720px) {
+  .th-work .jjg-stamp.fake { width: 56px; height: 56px; transform: rotate(-12deg); font-size: 16px; }
+  .th-elem .jjg-stamp.fake { transform: rotate(-9deg); animation: none; }
+  .th-teen .jjg-stamp.fake { transform: rotate(-6deg); }
+}
+
+/* =========================================================
    움직임
    ========================================================= */
 @keyframes bob { 50% { transform: translateY(-8px) rotate(-3deg); } }

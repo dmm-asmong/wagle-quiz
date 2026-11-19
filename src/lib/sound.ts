@@ -33,7 +33,7 @@ function tone(freq: number, start: number, dur: number, type: OscillatorType = "
   o.stop(t + dur + 0.05);
 }
 
-export type Sfx = "click" | "hint" | "reveal" | "tick" | "score" | "finish" | "start";
+export type Sfx = "click" | "hint" | "reveal" | "tick" | "score" | "finish" | "start" | "pick" | "stamp";
 
 export function playSfx(kind: Sfx) {
   switch (kind) {
@@ -57,6 +57,15 @@ export function playSfx(kind: Sfx) {
     case "score":
       tone(880, 0, 0.09, "square", 0.08);
       tone(1175, 0.07, 0.14, "square", 0.08);
+      break;
+    case "pick": // 진진가: 문장 고를 때 톡
+      tone(740, 0, 0.07, "sine", 0.16);
+      tone(990, 0.05, 0.09, "sine", 0.1);
+      break;
+    case "stamp": // 진진가: 가짜 도장 쾅
+      tone(160, 0, 0.18, "triangle", 0.3);
+      tone(120, 0.02, 0.22, "sine", 0.22);
+      [784, 988].forEach((f, i) => tone(f, 0.2 + i * 0.09, 0.22, "triangle", 0.16));
       break;
     case "finish":
       [523, 523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.13, 0.28, "triangle", 0.2));
