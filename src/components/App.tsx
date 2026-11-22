@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AUDIENCES, getAudience } from "@/lib/audiences";
 import { makeHint, shuffleJjg } from "@/lib/build";
 import { CUSTOM_JJG_TYPE_ID, CUSTOM_TYPE_ID, isJjg, loadCustom, toQuestion, type CustomQ } from "@/lib/custom";
-import { playSfx, startBgm, stopBgm, type Sfx } from "@/lib/sound";
+import { playSfx, setBgmUrgent, startBgm, stopBgm, type Sfx } from "@/lib/sound";
 import type { AudienceId, Level, Question, QuizType } from "@/lib/types";
 import Mascot from "./Mascot";
 import Editor from "./Editor";
@@ -35,7 +35,7 @@ const JJG_TOPIC: Record<AudienceId, string> = { elem: "오늘의 주제", teen: 
 const JJG_RIGHT: Record<AudienceId, string> = { elem: "딩동댕! 가짜를 찾았어요!", teen: "정답! 가짜 잡았다!", adult: "정답입니다.", work: "정확히 찾으셨습니다!" };
 const JJG_WRONG: Record<AudienceId, string> = { elem: "앗, 그건 진짜였어요!", teen: "아깝다, 그건 진짜였어!", adult: "그 문장은 사실이었습니다.", work: "아쉽지만 그 문장은 사실입니다." };
 
-function readPrefs(): { sfx?: boolean; settings?: Partial<Settings> } {
+function readPrefs(): { bgm?: boolean; sfx?: boolean; settings?: Partial<Settings> } {
   if (typeof window === "undefined") return {};
   try {
     return JSON.parse(localStorage.getItem(PREF_KEY) || "{}");
@@ -60,7 +60,7 @@ export default function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [settings, setSettings] = useState<Settings>(() => ({ diff: "all", count: 10, timer: 20, ...readPrefs().settings }));
   const [customTimer, setCustomTimer] = useState("");
-  const [bgm, setBgm] = useState(false);
+  const [bgm, setBgm] = useState(() => readPrefs().bgm !== false); // 기본 켜짐: 퀴즈가 시작되면 자동 재생
   const [sfx, setSfx] = useState(() => readPrefs().sfx !== false);
   const [isFs, setIsFs] = useState(false);
   const [showHowTo, setShowHowTo] = useState(false);
@@ -91,17 +91,18 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(PREF_KEY, JSON.stringify({ sfx, settings }));
+      localStorage.setItem(PREF_KEY, JSON.stringify({ bgm, sfx, settings }));
     } catch {}
-  }, [sfx, settings]);
+  }, [bgm, sfx, settings]);
 
   const fx = useCallback((k: Sfx) => sfx && playSfx(k), [sfx]);
 
+  // 퀴즈를 시작하면(문제 화면) 배경음악이 나오고, 결과·홈·편집 화면으로 나가면 멈춘다
   useEffect(() => {
-    if (bgm) startBgm();
+    if (bgm && screen === "play") startBgm();
     else stopBgm();
     return () => stopBgm();
-  }, [bgm]);
+  }, [bgm, screen]);
 
   useEffect(() => {
     const on = () => setIsFs(!!document.fullscreenElement);
@@ -170,6 +171,12 @@ export default function App() {
     }, 1000);
     return () => clearTimeout(t);
   }, [screen, left, revealed, hintOn, settings.timer, fx]);
+
+  // 힌트가 열리기 직전 5초는 배경음 초침이 빨라져 긴장감을 더한다
+  useEffect(() => {
+    setBgmUrgent(screen === "play" && !revealed && !hintOn && settings.timer > 0 && left <= 5);
+    return () => setBgmUrgent(false);
+  }, [screen, revealed, hintOn, settings.timer, left]);
 
   const showHint = useCallback(() => {
     if (!hintOn) fx("hint");
@@ -250,7 +257,7 @@ export default function App() {
           <span className="brand-slogan">다 같이 와글와글, 정답은 짜잔!</span>
         </button>
         <div className="toggles">
-          <button className={`chip ${bgm ? "on" : ""}`} onClick={() => setBgm((v) => !v)} aria-pressed={bgm}>
+          <button className={`chip ${bgm ? "on" : ""}`} onClick={() => setBgm((v) => !v)} aria-pressed={bgm} title="퀴즈가 시작되면 배경음악이 나와요">
             <span aria-hidden>{bgm ? "🎵" : "🔇"}</span> 배경음 {bgm ? "켜짐" : "꺼짐"}
           </button>
           <button className={`chip ${sfx ? "on" : ""}`} onClick={() => { setSfx((v) => !v); if (!sfx) playSfx("click"); }} aria-pressed={sfx}>
