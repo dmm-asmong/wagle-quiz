@@ -76,7 +76,7 @@ export function playSfx(kind: Sfx) {
 // ───────── 배경음악 ─────────
 // 1순위: public/audio/quiz-bgm.mp3 (직접 넣은 무료 음원). 파일이 없으면 2순위: 긴장감 있는 합성 BGM.
 export const BGM_FILE = "/audio/quiz-bgm.mp3";
-const BGM_VOLUME = 0.45; // 파일 음원 볼륨 (0~1)
+const BGM_VOLUME = 0.25; // 파일 음원 볼륨 (0~1). 이 곡은 -9.7 LUFS 로 큰 편이라 효과음이 묻히지 않게 낮춤
 
 let bgmToken = 0; // 시작/중지 경쟁 상태 방지용
 let bgmEl: HTMLAudioElement | null = null;
