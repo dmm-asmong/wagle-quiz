@@ -22,7 +22,7 @@ TV·프로젝터에 띄워 놓고 선생님(강사)이 진행하는 단체 퀴�
 ## 배경음악 바꾸기
 - 기본: 앱이 직접 만드는 긴장감 있는 합성 BGM (A단조 112BPM, 심장 박동·초침·반음 베이스). 저작권 걱정 없음.
 - 원하는 무료 음원을 쓰려면 `public/audio/quiz-bgm.mp3` 로 저장하세요. 파일이 있으면 그 곡을 반복 재생하고, 없으면 합성 BGM으로 돌아갑니다.
-- 현재 `quiz-bgm.mp3` 는 Pixabay Music 의 `echoes_of_lumen` 곡 (Pixabay 콘텐츠 라이선스: 출처 표기 불필요). `public/audio/` 의 다른 mp3 3곡은 후보로 남겨 둔 것이며 앱은 `quiz-bgm.mp3` 만 재생합니다.
+- 현재 `quiz-bgm.mp3` 는 Pixabay Music 의 `echoes_of_lumen` 곡 (Pixabay 콘텐츠 라이선스: 출처 표기 불필요). 쓰지 않은 후보 mp3 3곡은 `bgm-candidates/` 에 보관해 두었습니다(앱에는 포함되지 않음). 바꾸려면 원하는 곡을 `public/audio/quiz-bgm.mp3` 로 복사하세요.
 - 음원 라이선스가 CC BY(출처 표기 필요)라면 앱 하단(`App.tsx` footer) 등에 "Music: 곡명 — 작곡가 (사이트), CC BY 4.0" 을 꼭 적어 주세요. 볼륨은 `src/lib/sound.ts` 의 `BGM_VOLUME`.
 
 ## 개발
