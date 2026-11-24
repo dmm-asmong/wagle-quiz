@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AUDIENCES, getAudience } from "@/lib/audiences";
-import { makeHint, shuffleJjg } from "@/lib/build";
+import { makeHint, pickQuestions, shuffleJjg } from "@/lib/build";
 import { CUSTOM_JJG_TYPE_ID, CUSTOM_TYPE_ID, isJjg, loadCustom, toQuestion, type CustomQ } from "@/lib/custom";
 import { playSfx, setBgmUrgent, startBgm, stopBgm, type Sfx } from "@/lib/sound";
 import type { AudienceId, Level, Question, QuizType } from "@/lib/types";
@@ -125,21 +125,14 @@ export default function App() {
 
   const start = (typeIds: string[]) => {
     const types = allTypes.filter((t) => typeIds.includes(t.id));
-    let pool = types.flatMap((t) => t.questions);
-    if (settings.diff !== "all") pool = pool.filter((q) => q.l === settings.diff);
-    if (!pool.length) {
-      setPoolNote("이 조건에 맞는 문제가 없어요. 난이도를 '전체'로 바꿔 보세요.");
+    const { picked, fromOther } = pickQuestions(types, settings.diff, settings.count);
+    if (!picked.length) {
+      setPoolNote("고른 퀴즈에 문제가 없어요. 다른 퀴즈를 골라 보세요.");
       return;
     }
-    // 여러 종류를 섞을 때는 종류가 고르게 나오도록 번갈아 뽑기
-    const byType = types.map((t) => shuffle(pool.filter((q) => q.typeId === t.id))).filter((a) => a.length);
-    const picked: Question[] = [];
-    let round = 0;
-    while (picked.length < settings.count && byType.some((a) => a.length > round)) {
-      for (const arr of shuffle(byType)) if (arr[round] && picked.length < settings.count) picked.push(arr[round]);
-      round++;
-    }
-    setPoolNote(picked.length < settings.count ? `조건에 맞는 문제가 ${picked.length}개라서 ${picked.length}문제로 진행해요.` : "");
+    if (picked.length < settings.count) setPoolNote(`고른 퀴즈의 문제가 모두 ${picked.length}개라서 ${picked.length}문제로 진행해요.`);
+    else if (fromOther > 0) setPoolNote(`고른 난이도 문제가 ${picked.length - fromOther}개뿐이라, 나머지 ${fromOther}문제는 가까운 난이도에서 채웠어요.`);
+    else setPoolNote("");
     // 진진가는 문장 순서를 매번 섞어 가짜 위치가 달라지게
     setQueue(shuffle(picked).map((q) => shuffleJjg(q)));
     setIdx(0);
@@ -241,6 +234,12 @@ export default function App() {
   }, [cur]);
 
   const totalQ = allTypes.reduce((n, t) => n + t.questions.length, 0);
+  // 지금 고른 퀴즈 종류 기준의 문제 수: 고른 난이도 문제 수(exactSize)와 전체 문제 수(poolSize)
+  const activeQs = (selected.length ? allTypes.filter((t) => selected.includes(t.id)) : allTypes).flatMap((t) => t.questions);
+  const poolSize = activeQs.length;
+  const exactSize = settings.diff === "all" ? poolSize : activeQs.filter((q) => q.l === settings.diff).length;
+  const countShort = settings.count > poolSize; // 난이도를 무시해도 모자람
+  const countFilled = !countShort && settings.count > exactSize; // 가까운 난이도로 채움
   const timerOptions = [10, 15, 20, 30];
   const timerIsCustom = settings.timer !== 0 && !timerOptions.includes(settings.timer);
 
@@ -398,11 +397,23 @@ export default function App() {
                   <p className="step-q">몇 문제 풀까요?</p>
                   <div className="seg">
                     {[5, 10, 15, 20].map((n) => (
-                      <button key={n} className={settings.count === n ? "on" : ""} onClick={() => setSettings((s) => ({ ...s, count: n }))}>
+                      <button
+                        key={n}
+                        className={`${settings.count === n ? "on" : ""} ${n > poolSize ? "short" : ""}`}
+                        onClick={() => setSettings((s) => ({ ...s, count: n }))}
+                        title={n > poolSize ? `고른 퀴즈에는 문제가 ${poolSize}개뿐이에요` : undefined}
+                      >
                         {n}문제
                       </button>
                     ))}
                   </div>
+                  <p className={`step-hint ${countShort ? "warn" : ""}`}>
+                    {countShort
+                      ? `⚠️ 고른 퀴즈의 문제가 모두 ${poolSize}개뿐이라 ${poolSize}문제만 나와요. 퀴즈 카드를 더 골라 보세요.`
+                      : countFilled
+                        ? `ℹ️ ${LEVEL_LABEL[settings.diff as Level]} 문제는 ${exactSize}개뿐이라, 나머지 ${settings.count - exactSize}문제는 가까운 난이도에서 채워요.`
+                        : `지금 조건에 맞는 문제 ${exactSize}개 중에서 뽑아요.`}
+                  </p>
                 </div>
                 <div className="step">
                   <p className="step-no">STEP 3</p>
@@ -467,6 +478,8 @@ export default function App() {
                   <b>{idx + 1}</b> / {queue.length}
                 </span>
               </div>
+
+              {poolNote && <p className="note play-note">{poolNote}</p>}
 
               <div className={`q-card tone-bg-${curType?.tone ?? "lavender"} ${revealed ? "revealed" : ""} ${isJjgQ ? "mode-jjg" : ""}`}>
                 <div className="q-meta">

@@ -161,6 +161,10 @@ input, textarea { font: inherit; color: inherit; }
 }
 .seg button.on, .seg-input.on { background: #efe7ff; border-color: var(--purple); color: var(--purple-d); }
 .seg button.on::after { content: " ✓"; }
+.seg button.short:not(.on) { opacity: .55; }
+.step-hint { margin: 10px 0 0; font-size: 13px; font-weight: 600; color: var(--ink-soft); line-height: 1.45; }
+.step-hint.warn { color: #9a5b00; }
+.play-note { margin: 0; }
 .seg-input { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; }
 .seg-input input { width: 52px; border: 0; outline: none; background: transparent; font-weight: 700; text-align: right; }
 .seg-sm button { padding: 6px 10px; font-size: 14px; }

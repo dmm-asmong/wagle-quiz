@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --no-warnings tests/jjg.test.mts"
+    "test": "node --experimental-strip-types --no-warnings tests/jjg.test.mts && node --experimental-strip-types --no-warnings tests/pick.test.mts"
   },
   "dependencies": {
     "next": "^16.4.6",
