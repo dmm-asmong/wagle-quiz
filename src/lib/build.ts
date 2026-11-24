@@ -113,3 +113,46 @@ export function buildType(raw: RawType): QuizType {
 }
 
 export type BuiltAudience = Audience;
+
+function shuffled<T>(arr: T[], rand: () => number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** 고른 난이도에 가까운 순서로 난이도 묶음을 돌려준다. 예: 쉬움 → [[1],[2],[3]], 보통 → [[2],[1,3]] */
+export function levelGroups(diff: "all" | Level): Level[][] {
+  if (diff === "all") return [[1, 2, 3]];
+  const groups: Level[][] = [];
+  for (let d = 0; d <= 2; d++) {
+    const g = ([diff - d, diff + d] as number[]).filter((l, i, a) => l >= 1 && l <= 3 && a.indexOf(l) === i) as Level[];
+    if (g.length) groups.push(g);
+  }
+  return groups;
+}
+
+/**
+ * 문제 뽑기: 고른 난이도를 먼저 쓰고, 개수가 모자라면 가까운 난이도 문제로 채운다.
+ * 각 단계에서 여러 퀴즈 종류가 고르게 나오도록 번갈아 뽑는다.
+ * 반환값의 fromOther는 다른 난이도로 채운 문제 수.
+ */
+export function pickQuestions(types: QuizType[], diff: "all" | Level, count: number, rand: () => number = Math.random): { picked: Question[]; fromOther: number } {
+  const picked: Question[] = [];
+  let fromOther = 0;
+  groups: for (const [gi, levels] of levelGroups(diff).entries()) {
+    const byType = types.map((t) => shuffled(t.questions.filter((q) => levels.includes(q.l)), rand)).filter((a) => a.length);
+    for (let round = 0; byType.some((a) => a.length > round); round++) {
+      for (const arr of shuffled(byType, rand)) {
+        if (picked.length >= count) break groups;
+        if (arr[round]) {
+          picked.push(arr[round]);
+          if (gi > 0) fromOther++;
+        }
+      }
+    }
+  }
+  return { picked, fromOther };
+}
