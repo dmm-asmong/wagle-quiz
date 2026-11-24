@@ -241,6 +241,12 @@ export default function App() {
   }, [cur]);
 
   const totalQ = allTypes.reduce((n, t) => n + t.questions.length, 0);
+  // 지금 고른 퀴즈 종류·난이도 조건에 맞는 문제 수 (설정 화면에서 미리 알려 주기 위함)
+  const poolSize = (selected.length ? allTypes.filter((t) => selected.includes(t.id)) : allTypes).reduce(
+    (n, t) => n + t.questions.filter((q) => settings.diff === "all" || q.l === settings.diff).length,
+    0,
+  );
+  const countShort = settings.count > poolSize;
   const timerOptions = [10, 15, 20, 30];
   const timerIsCustom = settings.timer !== 0 && !timerOptions.includes(settings.timer);
 
@@ -398,11 +404,21 @@ export default function App() {
                   <p className="step-q">몇 문제 풀까요?</p>
                   <div className="seg">
                     {[5, 10, 15, 20].map((n) => (
-                      <button key={n} className={settings.count === n ? "on" : ""} onClick={() => setSettings((s) => ({ ...s, count: n }))}>
+                      <button
+                        key={n}
+                        className={`${settings.count === n ? "on" : ""} ${n > poolSize ? "short" : ""}`}
+                        onClick={() => setSettings((s) => ({ ...s, count: n }))}
+                        title={n > poolSize ? `지금 조건에는 문제가 ${poolSize}개뿐이에요` : undefined}
+                      >
                         {n}문제
                       </button>
                     ))}
                   </div>
+                  <p className={`step-hint ${countShort ? "warn" : ""}`}>
+                    {countShort
+                      ? `⚠️ 지금 조건에 맞는 문제가 ${poolSize}개뿐이라 ${poolSize}문제만 나와요. 난이도를 '전체'로 바꾸거나 퀴즈 카드를 더 골라 보세요.`
+                      : `지금 조건에 맞는 문제 ${poolSize}개 중에서 뽑아요.`}
+                  </p>
                 </div>
                 <div className="step">
                   <p className="step-no">STEP 3</p>
@@ -467,6 +483,8 @@ export default function App() {
                   <b>{idx + 1}</b> / {queue.length}
                 </span>
               </div>
+
+              {poolNote && <p className="note play-note">{poolNote}</p>}
 
               <div className={`q-card tone-bg-${curType?.tone ?? "lavender"} ${revealed ? "revealed" : ""} ${isJjgQ ? "mode-jjg" : ""}`}>
                 <div className="q-meta">
